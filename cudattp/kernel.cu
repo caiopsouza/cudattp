@@ -50,23 +50,14 @@ void matrixMul(const int* const m, const int* const n, int* p, const unsigned in
 	cudaFree(p_dev);
 }
 
-int* computeDistanceMatrix(const Problem problem) {
-	int* res = (int*)malloc(problem.node_length * problem.node_length * sizeof(int));
+inline int distance(const Problem problem, const size_t j, const size_t i) {
+	const auto n_j = problem.nodes[j];
+	const auto n_i = problem.nodes[i];
 
-	for (auto j = 1; j < problem.node_length; j++) {
-		for (auto i = 1; i <= j; i++) {
-			const auto n_j = problem.nodes[j];
-			const auto n_i = problem.nodes[i];
+	const auto dx = n_j.x - n_i.x;
+	const auto dy = n_j.y - n_i.y;
 
-			const auto dx = n_j.x - n_i.x;
-			const auto dy = n_j.y - n_i.y;
-
-			const auto dist = static_cast<int>(ceil(sqrt(dx * dx + dy * dy)));
-			res[j * problem.node_length + i] = res[i * problem.node_length + j] = dist;
-		}
-	}
-
-	return res;
+	return static_cast<int>(ceil(sqrt(dx * dx + dy * dy)));
 }
 
 int main()
@@ -84,16 +75,17 @@ int main()
 	fsec elapsed = t1 - t0;
 	std::cout << "load problem time: " << elapsed.count() << std::endl;
 
-	t0 = Time::now();
-	const auto dist_matrix = computeDistanceMatrix(problem);
-	t1 = Time::now();
-	elapsed = t1 - t0;
-	std::cout << "compute distance matrix time (cpu): " << elapsed.count() << std::endl;
+	int* solution = (int*)malloc(problem.item_length * sizeof(int));
+	if (!solution) {
+		fprintf(stderr, "Cannot allocate memory for solution at line %d in %s", __LINE__, __FILE__);
+		exit(1);
+	}
 
-	std::cout << dist_matrix[1 * problem.node_length + 1] << " " << dist_matrix[1 * problem.node_length + 1] << std::endl;
-	std::cout << dist_matrix[1 * problem.node_length + 2] << " " << dist_matrix[2 * problem.node_length + 1] << std::endl;
-	std::cout << dist_matrix[1 * problem.node_length + 3] << " " << dist_matrix[3 * problem.node_length + 1] << std::endl;
+	for (auto i = 0; i < problem.item_length;i++) {
+		solution[i] = i;
+	}
 
+	free(solution);
 	freeProblem(problem);
 	return 0;
 }

@@ -2,20 +2,21 @@
 
 #include <string>
 
-struct point {
+struct node {
 	int x = 0, y = 0;
+	size_t next_node_index_item;
 };
-typedef struct point Point;
+typedef struct node Node;
 
 struct item {
+	size_t index = 0, node = 0;
 	int profit = 0, weight = 0;
-	size_t node = 0;
 };
 typedef struct item Item;
 
 struct problem {
 	size_t node_length = 0;
-	Point* nodes = nullptr;
+	Node* nodes = nullptr;
 
 	size_t item_length = 0;
 	Item* items = nullptr;

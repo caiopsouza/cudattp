@@ -19,6 +19,34 @@ void getValueFromLine(std::string line, std::string key, T* value) {
 	ss >> *value;
 }
 
+int compareItemsByLocation(const void* a, const void* b)
+{
+	auto node_a = ((Item*)a)->node;
+	auto node_b = ((Item*)b)->node;
+
+	const auto node_res = (node_a > node_b) - (node_a < node_b);
+	if (node_res) {
+		return node_res;
+	}
+
+	auto index_a = ((Item*)a)->index;
+	auto index_b = ((Item*)b)->index;
+
+	return (index_a > index_b) - (index_a < index_b);
+}
+
+void sortItems(Problem problem) {
+	qsort(problem.items, problem.item_length, sizeof(Item), compareItemsByLocation);
+
+	size_t item_index = 0;
+	for (auto i = 0; i < problem.node_length; i++) {
+		while (problem.items[item_index].node == i) {
+			item_index++;
+		}
+		problem.nodes[i].next_node_index_item = item_index;
+	}
+}
+
 Problem loadProblemFromFile(const std::string filename)
 {
 	Problem problem;
@@ -61,7 +89,7 @@ Problem loadProblemFromFile(const std::string filename)
 	problem.node_length++;
 	problem.item_length++;
 
-	problem.nodes = (Point*)malloc(problem.node_length * sizeof(Point));
+	problem.nodes = (Node*)malloc(problem.node_length * sizeof(Node));
 	if (!problem.nodes) {
 		fprintf(stderr, "Cannot allocate memory for nodes at line %d in %s", __LINE__, __FILE__);
 		exit(1);
@@ -73,6 +101,7 @@ Problem loadProblemFromFile(const std::string filename)
 		exit(1);
 	}
 
+	problem.nodes[0] = Node{};
 	for (auto i = 1; i < problem.node_length; i++) {
 		unsigned int index;
 		int x, y;
@@ -90,6 +119,7 @@ Problem loadProblemFromFile(const std::string filename)
 	infile.ignore(1, '\n');
 	std::getline(infile, line);
 
+	problem.items[0] = Item{};
 	for (auto i = 1; i < problem.item_length; i++) {
 		unsigned int index, node;
 		int profit, weight;
@@ -101,12 +131,18 @@ Problem loadProblemFromFile(const std::string filename)
 			exit(1);
 		}
 
-		problem.items[i] = { .profit = profit, .weight = weight, .node = node };
+		problem.items[i] = {
+			.index = index,
+			.node = node,
+			.profit = profit,
+			.weight = weight
+		};
 	}
+
+	sortItems(problem);
 
 	return problem;
 }
-
 
 void freeProblem(const Problem problem) {
 	free(problem.nodes);;
