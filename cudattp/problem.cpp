@@ -1,11 +1,12 @@
 #include "problem.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
 template<typename T>
-void getValueFromLine(std::string line, std::string key, T* value) {
+void getValueFromLine(std::string line, std::string key, T& value) {
 	if (line.find(key) == std::string::npos) {
 		return;
 	}
@@ -16,31 +17,23 @@ void getValueFromLine(std::string line, std::string key, T* value) {
 	}
 
 	std::istringstream ss(line.substr(index));
-	ss >> *value;
+	ss >> value;
 }
 
-int compareItemsByLocation(const void* a, const void* b)
+bool compareItemsByLocation(const Item a, const Item b)
 {
-	auto node_a = ((Item*)a)->node;
-	auto node_b = ((Item*)b)->node;
-
-	const auto node_res = (node_a > node_b) - (node_a < node_b);
-	if (node_res) {
-		return node_res;
+	if (a.node != b.node) {
+		return a.node < b.node;
 	}
-
-	auto index_a = ((Item*)a)->index;
-	auto index_b = ((Item*)b)->index;
-
-	return (index_a > index_b) - (index_a < index_b);
+	return a.index < b.index;
 }
 
 void sortItems(Problem problem) {
-	qsort(problem.items, problem.item_length, sizeof(Item), compareItemsByLocation);
+	std::sort(problem.items.begin(), problem.items.end(), compareItemsByLocation);
 
 	size_t item_index = 0;
-	for (auto i = 0; i < problem.node_length; i++) {
-		while (problem.items[item_index].node == i) {
+	for (auto i = 0; i < problem.nodes.size(); i++) {
+		while (item_index < problem.items.size() && problem.items[item_index].node == i) {
 			item_index++;
 		}
 		problem.nodes[i].next_node_index_item = item_index;
@@ -61,14 +54,17 @@ Problem loadProblemFromFile(const std::string filename)
 	std::string line;
 	std::string edge_weight_type;
 
+	size_t node_length = 0;
+	size_t item_length = 0;
+
 	while (std::getline(infile, line) && line.find("NODE_COORD_SECTION") == std::string::npos) {
-		getValueFromLine(line, "DIMENSION", &problem.node_length);
-		getValueFromLine(line, "NUMBER OF ITEMS", &problem.item_length);
-		getValueFromLine(line, "CAPACITY OF KNAPSACK", &problem.knapsack_capacity);
-		getValueFromLine(line, "MIN SPEED", &problem.min_speed);
-		getValueFromLine(line, "MAX SPEED", &problem.max_speed);
-		getValueFromLine(line, "RENTING RATIO", &problem.renting_ratio);
-		getValueFromLine(line, "EDGE_WEIGHT_TYPE", &edge_weight_type);
+		getValueFromLine(line, "DIMENSION", node_length);
+		getValueFromLine(line, "NUMBER OF ITEMS", item_length);
+		getValueFromLine(line, "CAPACITY OF KNAPSACK", problem.knapsack_capacity);
+		getValueFromLine(line, "MIN SPEED", problem.min_speed);
+		getValueFromLine(line, "MAX SPEED", problem.max_speed);
+		getValueFromLine(line, "RENTING RATIO", problem.renting_ratio);
+		getValueFromLine(line, "EDGE_WEIGHT_TYPE", edge_weight_type);
 	}
 
 	if (edge_weight_type != "CEIL_2D") {
@@ -76,33 +72,30 @@ Problem loadProblemFromFile(const std::string filename)
 		exit(1);
 	}
 
-	if (problem.node_length == 0) {
+	if (node_length == 0) {
 		fprintf(stderr, "Cannot read DIMENSION from the file at line %d in %s", __LINE__, __FILE__);
 		exit(1);
 	}
 
-	if (problem.item_length == 0) {
+	if (item_length == 0) {
 		fprintf(stderr, "Cannot read NUMBER OF ITEMS from the file at line %d in %s", __LINE__, __FILE__);
 		exit(1);
 	}
 
-	problem.node_length++;
-	problem.item_length++;
-
-	problem.nodes = (Node*)malloc(problem.node_length * sizeof(Node));
-	if (!problem.nodes) {
+	problem.nodes.resize(node_length + 1);
+	if (problem.nodes.empty()) {
 		fprintf(stderr, "Cannot allocate memory for nodes at line %d in %s", __LINE__, __FILE__);
 		exit(1);
 	}
 
-	problem.items = (Item*)malloc(problem.item_length * sizeof(Item));
-	if (!problem.items) {
+	problem.items.resize(item_length + 1);
+	if (problem.items.empty()) {
 		fprintf(stderr, "Cannot allocate memory for items at line %d in %s", __LINE__, __FILE__);
 		exit(1);
 	}
 
 	problem.nodes[0] = Node{};
-	for (auto i = 1; i < problem.node_length; i++) {
+	for (auto i = 1; i < problem.nodes.size(); i++) {
 		unsigned int index;
 		int x, y;
 
@@ -120,7 +113,7 @@ Problem loadProblemFromFile(const std::string filename)
 	std::getline(infile, line);
 
 	problem.items[0] = Item{};
-	for (auto i = 1; i < problem.item_length; i++) {
+	for (auto i = 1; i < problem.items.size(); i++) {
 		unsigned int index, node;
 		int profit, weight;
 
@@ -145,5 +138,4 @@ Problem loadProblemFromFile(const std::string filename)
 }
 
 void freeProblem(const Problem problem) {
-	free(problem.nodes);;
 }

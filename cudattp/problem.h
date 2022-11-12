@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 struct node {
 	int x = 0, y = 0;
@@ -15,12 +16,8 @@ struct item {
 typedef struct item Item;
 
 struct problem {
-	size_t node_length = 0;
-	Node* nodes = nullptr;
-
-	size_t item_length = 0;
-	Item* items = nullptr;
-
+	std::vector<Node> nodes;
+	std::vector<Item> items;
 	int knapsack_capacity = 0;
 	float min_speed = 0, max_speed = 0, renting_ratio = 0;
 };
