@@ -14,10 +14,10 @@ struct item {
 typedef struct item Item;
 
 struct problem {
-	size_t node_count = 0;
+	size_t node_length = 0;
 	Point* nodes = nullptr;
 
-	size_t item_count = 0;
+	size_t item_length = 0;
 	Item* items = nullptr;
 
 	int knapsack_capacity = 0;
