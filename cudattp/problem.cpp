@@ -28,7 +28,7 @@ bool compareItemsByLocation(const Item a, const Item b)
 	return a.index < b.index;
 }
 
-void sortItems(Problem problem) {
+void sortItems(Problem& problem) {
 	std::sort(problem.items.begin(), problem.items.end(), compareItemsByLocation);
 
 	size_t item_index = 0;
@@ -36,13 +36,13 @@ void sortItems(Problem problem) {
 		while (item_index < problem.items.size() && problem.items[item_index].node == i) {
 			item_index++;
 		}
-		problem.nodes[i].next_node_index_item = item_index;
+		//problem.nodes[i].next_node_index_item = item_index;
 	}
 }
 
 Problem loadProblemFromFile(const std::string filename)
 {
-	Problem problem;
+	Problem problem{};
 
 	std::ifstream infile(filename);
 
@@ -97,7 +97,7 @@ Problem loadProblemFromFile(const std::string filename)
 	problem.nodes[0] = Node{};
 	for (auto i = 1; i < problem.nodes.size(); i++) {
 		unsigned int index;
-		int x, y;
+		double x, y;
 
 		infile >> index >> x >> y;
 
@@ -106,7 +106,7 @@ Problem loadProblemFromFile(const std::string filename)
 			exit(1);
 		}
 
-		problem.nodes[i] = { .x = x, .y = y };
+		problem.nodes[i] = { .x = (int)x, .y = (int)y };
 	}
 
 	infile.ignore(1, '\n');
@@ -132,7 +132,7 @@ Problem loadProblemFromFile(const std::string filename)
 		};
 	}
 
-	sortItems(problem);
+	//sortItems(problem);
 
 	return problem;
 }

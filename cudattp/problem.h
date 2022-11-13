@@ -5,7 +5,7 @@
 
 struct node {
 	int x = 0, y = 0;
-	size_t next_node_index_item;
+	//size_t next_node_index_item;
 };
 typedef struct node Node;
 
@@ -19,7 +19,7 @@ struct problem {
 	std::vector<Node> nodes;
 	std::vector<Item> items;
 	int knapsack_capacity = 0;
-	float min_speed = 0, max_speed = 0, renting_ratio = 0;
+	double min_speed = 0, max_speed = 0, renting_ratio = 0;
 };
 
 typedef struct problem Problem;

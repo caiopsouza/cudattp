@@ -84,9 +84,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="problem.h" />
+    <ClInclude Include="solution.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="problem.cpp" />
+    <ClCompile Include="solution.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
