@@ -23,7 +23,7 @@ int distance(const Problem& problem, const int j, const int i);
 // Cost of the solution for the TSP
 double tspCost(const Problem& problem, const Solution& solution);
 
-double tspCostChangeSwap(const Problem& problem, Solution& solution, int node_a, int node_b);
+//double tspCostChangeSwap(const Problem& problem, Solution& solution, int node_a, int node_b);
 
 __device__
 int tspCostChangeSquaredSwapDev(Node* solution_nodes, size_t node_size, unsigned int sol_node_a, unsigned int sol_node_b);
