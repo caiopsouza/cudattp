@@ -1,5 +1,6 @@
 NAME : pcb3038
 COMMENT : Drilling problem (Junger/Reinelt)
+COMMENT : Best known 137694
 TYPE : TSP
 DIMENSION : 3038
 EDGE_WEIGHT_TYPE : EUC_2D

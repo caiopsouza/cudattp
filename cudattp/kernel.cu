@@ -46,7 +46,7 @@ double objectiveValue(const Problem& problem, const Solution& solution) {
 	return res;
 }
 
-void localSearch(const Problem& problem, Solution& solution) {
+void localSearch(Solution& solution) {
 	auto iteration = 1;
 	auto has_improved = true;
 
@@ -68,7 +68,7 @@ void localSearch(const Problem& problem, Solution& solution) {
 			}
 		}
 
-		//std::cout << iteration << " " << best_change << " " << best_swap_i << " " << best_swap_j << " " << solution.nodes[best_swap_i] << " " << solution.nodes[best_swap_j] << " " << tspCost(problem, solution) << " ";
+		//std::cout << iteration << " " << best_change << " " << best_swap_i << " " << best_swap_j << std::endl;
 		++iteration;
 
 		while (best_swap_i < best_swap_j) {
@@ -76,8 +76,6 @@ void localSearch(const Problem& problem, Solution& solution) {
 			++best_swap_i;
 			--best_swap_j;
 		}
-
-		//std::cout << tspCost(problem, solution) << " " << std::endl;
 	}
 }
 
@@ -91,7 +89,7 @@ int main()
 	typedef std::chrono::microseconds ms;
 
 	auto t0 = Time::now();
-	const auto problem = loadProblemFromFile("instances/tsp/pr1002.tsp");
+	const auto problem = loadProblemFromFile("instances/tsp/pcb3038.tsp");
 	auto t1 = Time::now();
 	auto elapsed = t1 - t0;
 	std::cout << "load problem time: " << std::chrono::duration_cast<ms>(elapsed).count() << std::endl;
@@ -102,9 +100,9 @@ int main()
 	}
 	solution.nodes[solution.nodes.size() - 1] = problem.nodes[0];
 
-	// 424 us
+	// 22.473.780 us, 151.250 cost, 137.694 bkr
 	t0 = Time::now();
-	localSearch(problem, solution);
+	localSearch(solution);
 	t1 = Time::now();
 	elapsed = t1 - t0;
 	std::cout << "local search time: " << std::chrono::duration_cast<ms>(elapsed).count() << std::endl;
