@@ -4,8 +4,8 @@
 #include <vector>
 
 struct node {
+	unsigned int index = 0;
 	int x = 0, y = 0;
-	//size_t next_node_index_item;
 };
 typedef struct node Node;
 

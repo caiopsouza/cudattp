@@ -7,16 +7,12 @@
 
 template<typename T>
 void getValueFromLine(std::string line, std::string key, T& value) {
-	if (line.find(key) == std::string::npos) {
+	if (!line.starts_with(key)) {
 		return;
 	}
 
-	const auto index = key.length() + 1;
-	if (index > line.length()) {
-		return;
-	}
-
-	std::istringstream ss(line.substr(index));
+	std::istringstream ss(line);
+	ss.ignore(std::numeric_limits<std::streamsize>::max(), ':');
 	ss >> value;
 }
 
@@ -26,18 +22,6 @@ bool compareItemsByLocation(const Item a, const Item b)
 		return a.node < b.node;
 	}
 	return a.index < b.index;
-}
-
-void sortItems(Problem& problem) {
-	std::sort(problem.items.begin(), problem.items.end(), compareItemsByLocation);
-
-	size_t item_index = 0;
-	for (auto i = 0; i < problem.nodes.size(); i++) {
-		while (item_index < problem.items.size() && problem.items[item_index].node == i) {
-			item_index++;
-		}
-		//problem.nodes[i].next_node_index_item = item_index;
-	}
 }
 
 Problem loadProblemFromFile(const std::string filename)
@@ -51,6 +35,7 @@ Problem loadProblemFromFile(const std::string filename)
 		exit(1);
 	}
 
+	std::string type;
 	std::string line;
 	std::string edge_weight_type;
 
@@ -58,6 +43,7 @@ Problem loadProblemFromFile(const std::string filename)
 	size_t item_length = 0;
 
 	while (std::getline(infile, line) && line.find("NODE_COORD_SECTION") == std::string::npos) {
+		getValueFromLine(line, "TYPE", type);
 		getValueFromLine(line, "DIMENSION", node_length);
 		getValueFromLine(line, "NUMBER OF ITEMS", item_length);
 		getValueFromLine(line, "CAPACITY OF KNAPSACK", problem.knapsack_capacity);
@@ -67,8 +53,8 @@ Problem loadProblemFromFile(const std::string filename)
 		getValueFromLine(line, "EDGE_WEIGHT_TYPE", edge_weight_type);
 	}
 
-	if (edge_weight_type != "CEIL_2D") {
-		fprintf(stderr, "This program only support edge_weight_type=CEIL_2D at line %d in %s", __LINE__, __FILE__);
+	if (edge_weight_type != "EUC_2D" && edge_weight_type != "CEIL_2D") {
+		fprintf(stderr, "This program only support EDGE_WEIGHT_TYPE=EUC_2D|CEIL_2D at line %d in %s", __LINE__, __FILE__);
 		exit(1);
 	}
 
@@ -77,62 +63,63 @@ Problem loadProblemFromFile(const std::string filename)
 		exit(1);
 	}
 
-	if (item_length == 0) {
-		fprintf(stderr, "Cannot read NUMBER OF ITEMS from the file at line %d in %s", __LINE__, __FILE__);
-		exit(1);
-	}
-
-	problem.nodes.resize(node_length + 1);
+	problem.nodes.resize(node_length);
 	if (problem.nodes.empty()) {
 		fprintf(stderr, "Cannot allocate memory for nodes at line %d in %s", __LINE__, __FILE__);
 		exit(1);
 	}
 
-	problem.items.resize(item_length + 1);
-	if (problem.items.empty()) {
-		fprintf(stderr, "Cannot allocate memory for items at line %d in %s", __LINE__, __FILE__);
-		exit(1);
+	if (type != "TSP") { // Assume TTP
+		if (item_length == 0) {
+			fprintf(stderr, "Cannot read NUMBER OF ITEMS from the file at line %d in %s", __LINE__, __FILE__);
+			exit(1);
+		}
+
+		problem.items.resize(item_length);
+		if (problem.items.empty()) {
+			fprintf(stderr, "Cannot allocate memory for items at line %d in %s", __LINE__, __FILE__);
+			exit(1);
+		}
 	}
 
-	problem.nodes[0] = Node{};
-	for (auto i = 1; i < problem.nodes.size(); i++) {
+	for (auto i = 0; i < problem.nodes.size(); ++i) {
 		unsigned int index;
 		double x, y;
 
 		infile >> index >> x >> y;
 
-		if (index != i) {
-			fprintf(stderr, "Index %d different of position %d when reading nodes at line %d in %s", index, i, __LINE__, __FILE__);
+		if (index != i + 1) {
+			fprintf(stderr, "Index %d different of position %d when reading nodes at line %d in %s", index, i + 1, __LINE__, __FILE__);
 			exit(1);
 		}
 
-		problem.nodes[i] = { .x = (int)x, .y = (int)y };
+		problem.nodes[i] = { .index = index, .x = (int)x, .y = (int)y };
 	}
 
-	infile.ignore(1, '\n');
-	std::getline(infile, line);
+	if (type != "TSP") { // Assume TTP
+		infile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		std::getline(infile, line);
 
-	problem.items[0] = Item{};
-	for (auto i = 1; i < problem.items.size(); i++) {
-		unsigned int index, node;
-		int profit, weight;
+		problem.items[0] = Item{};
+		for (auto i = 0; i < problem.items.size(); i++) {
+			unsigned int index, node;
+			int profit, weight;
 
-		infile >> index >> profit >> weight >> node;
+			infile >> index >> profit >> weight >> node;
 
-		if (index != i) {
-			fprintf(stderr, "Index %d different of position %d when reading items at line %d in %s", index, i, __LINE__, __FILE__);
-			exit(1);
+			if (index != i + 1) {
+				fprintf(stderr, "Index %d different of position %d when reading items at line %d in %s", index, i + 1, __LINE__, __FILE__);
+				exit(1);
+			}
+
+			problem.items[i] = {
+				.index = index,
+				.node = node,
+				.profit = profit,
+				.weight = weight
+			};
 		}
-
-		problem.items[i] = {
-			.index = index,
-			.node = node,
-			.profit = profit,
-			.weight = weight
-		};
 	}
-
-	//sortItems(problem);
 
 	return problem;
 }
