@@ -57,7 +57,7 @@ void localSearch(const Problem& problem, Solution& solution) {
 		has_improved = false;
 		auto best_swap_i = 0;
 		auto best_swap_j = 0;
-		double best_change = 0;
+		auto best_change = 0;
 
 		for (auto i = 1; i < solution.nodes.size() - 1; ++i) {
 			for (auto j = i + 1; j < solution.nodes.size(); ++j) {
@@ -88,10 +88,10 @@ int main()
 {
 	std::cout.imbue(std::locale(""));
 
-	std::cout << "time in milliseconds" << std::endl;
+	std::cout << "time in microseconds" << std::endl;
 
 	typedef std::chrono::high_resolution_clock Time;
-	typedef std::chrono::milliseconds ms;
+	typedef std::chrono::microseconds ms;
 	//typedef std::chrono::duration<std::chrono::milliseconds> fsec;
 	//typedef std::chrono::duration_cast<std::chrono::milliseconds> miliseconds;
 
@@ -106,6 +106,7 @@ int main()
 		solution.nodes[i] = i;
 	}
 
+	// 767 us
 	t0 = Time::now();
 	localSearch(problem, solution);
 	t1 = Time::now();
@@ -113,6 +114,11 @@ int main()
 	std::cout << "local search time: " << std::chrono::duration_cast<ms>(elapsed).count() << std::endl;
 
 	std::cout << tspCost(problem, solution) << std::endl;
+
+	for (auto node : solution.nodes) {
+		std::cout << node << " ";
+	}
+	std::cout << std::endl;
 
 	/*std::cout << tspCostChangeSwap(problem, solution, 0, 1) << std::endl;
 

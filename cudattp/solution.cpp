@@ -11,6 +11,13 @@ Solution solutionEmpty(Problem problem) {
 	return res;
 }
 
+inline int distanceSquared(const Node n_j, const Node n_i) {
+	const auto dx = n_j.x - n_i.x;
+	const auto dy = n_j.y - n_i.y;
+
+	return dx * dx + dy * dy;
+}
+
 int distance(const Problem& problem, const Node n_j, const Node n_i) {
 	const auto dx = n_j.x - n_i.x;
 	const auto dy = n_j.y - n_i.y;
@@ -56,6 +63,25 @@ double tspCost(const Problem& problem, const Solution& solution) {
 
 inline int positiveModulo(int n, int m) {
 	return (n + m) % m;
+}
+
+int tspCostChangeSquaredSwap(const Problem& problem, Solution& solution, int sol_node_a, int sol_node_b) {
+	auto node_size = problem.nodes.size();
+
+	auto& node_a = problem.nodes[solution.nodes[sol_node_a]];
+	auto& node_b = problem.nodes[solution.nodes[sol_node_b]];
+
+	const auto& node_before_a = problem.nodes[solution.nodes[positiveModulo(sol_node_a - 1, node_size)]];
+	const auto& node_after_a = problem.nodes[solution.nodes[(sol_node_a + 1) % node_size]];
+
+	const auto& node_before_b = problem.nodes[solution.nodes[positiveModulo(sol_node_b - 1, node_size)]];
+	const auto& node_after_b = problem.nodes[solution.nodes[(sol_node_b + 1) % node_size]];
+
+	auto distance_removed = distanceSquared(node_a, node_before_a) + distanceSquared(node_b, node_after_b);
+
+	auto distance_added = distanceSquared(node_a, node_after_b) + distanceSquared(node_b, node_before_a);
+
+	return distance_added - distance_removed;
 }
 
 double tspCostChangeSwap(const Problem& problem, Solution& solution, int node_a, int node_b) {
