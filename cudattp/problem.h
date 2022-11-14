@@ -2,10 +2,18 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 struct node {
-	unsigned int index = 0;
 	int x = 0, y = 0;
+
+	bool operator==(const node& o) const {
+		return x == o.x && y == o.y;
+	}
+
+	bool operator<(const node& o) const {
+		return x < o.x || (x == o.x && y < o.y);
+	}
 };
 typedef struct node Node;
 
@@ -18,6 +26,7 @@ typedef struct item Item;
 struct problem {
 	std::vector<Node> nodes;
 	std::vector<Item> items;
+	std::map<Node, unsigned int> nodes_index;
 	int knapsack_capacity = 0;
 	double min_speed = 0, max_speed = 0, renting_ratio = 0;
 };

@@ -93,7 +93,9 @@ Problem loadProblemFromFile(const std::string filename)
 			exit(1);
 		}
 
-		problem.nodes[i] = { .index = index, .x = (int)x, .y = (int)y };
+		Node node{ .x = (int)x, .y = (int)y };
+		problem.nodes[i] = node;
+		problem.nodes_index[node] = index;
 	}
 
 	if (type != "TSP") { // Assume TTP

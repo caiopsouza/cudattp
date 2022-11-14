@@ -5,7 +5,7 @@
 
 struct solution
 {
-	std::vector<int> nodes;
+	std::vector<Node> nodes;
 	std::vector<int> items;
 };
 
@@ -22,4 +22,5 @@ double tspCost(const Problem& problem, const Solution& solution);
 
 double tspCostChangeSwap(const Problem& problem, Solution& solution, int node_a, int node_b);
 
+int tspCostChangeSquaredSwap(const std::vector<Node>& solution_nodes, int sol_node_a, int sol_node_b);
 int tspCostChangeSquaredSwap(const Problem& problem, Solution& solution, int sol_node_a, int sol_node_b);

@@ -5,7 +5,7 @@
 Solution solutionEmpty(Problem problem) {
 	Solution res;
 
-	res.nodes.resize(problem.nodes.size());
+	res.nodes.resize(problem.nodes.size() + 1);
 	res.items.resize(problem.items.size(), false);
 
 	return res;
@@ -41,17 +41,15 @@ double actualDistance(const Problem& problem, const int j, const int i) {
 }
 
 double actualDistance(const Problem& problem, const Solution& solution, const int j, const int i) {
-	return actualDistance(problem, problem.nodes[solution.nodes[j]], problem.nodes[solution.nodes[i]]);
+	return actualDistance(problem,solution.nodes[j], solution.nodes[i]);
 }
 
 double tspCost(const Problem& problem, const Solution& solution) {
 	double res = 0;
-	Node previous_node = problem.nodes[solution.nodes.back()];
+	Node previous_node = solution.nodes.back();
 
-	for (auto& node_index : solution.nodes)
+	for (auto& node: solution.nodes)
 	{
-		auto& node = problem.nodes[node_index];
-
 		const auto dist = actualDistance(problem, previous_node, node);
 		res += dist;
 
@@ -65,17 +63,36 @@ inline int positiveModulo(int n, int m) {
 	return (n + m) % m;
 }
 
+int tspCostChangeSquaredSwap(const std::vector<Node>& solution_nodes, int sol_node_a, int sol_node_b) {
+	auto node_size = solution_nodes.size();
+
+	const auto& node_a = solution_nodes[sol_node_a];
+	const auto& node_b = solution_nodes[sol_node_b];
+
+	const auto& node_before_a = solution_nodes[positiveModulo(sol_node_a - 1, node_size)];
+	const auto& node_after_a = solution_nodes[(sol_node_a + 1) % node_size];
+
+	const auto& node_before_b = solution_nodes[positiveModulo(sol_node_b - 1, node_size)];
+	const auto& node_after_b = solution_nodes[(sol_node_b + 1) % node_size];
+
+	auto distance_removed = distanceSquared(node_a, node_before_a) + distanceSquared(node_b, node_after_b);
+
+	auto distance_added = distanceSquared(node_a, node_after_b) + distanceSquared(node_b, node_before_a);
+
+	return distance_added - distance_removed;
+}
+
 int tspCostChangeSquaredSwap(const Problem& problem, Solution& solution, int sol_node_a, int sol_node_b) {
 	auto node_size = problem.nodes.size();
 
-	auto& node_a = problem.nodes[solution.nodes[sol_node_a]];
-	auto& node_b = problem.nodes[solution.nodes[sol_node_b]];
+	auto& node_a = solution.nodes[sol_node_a];
+	auto& node_b = solution.nodes[sol_node_b];
 
-	const auto& node_before_a = problem.nodes[solution.nodes[positiveModulo(sol_node_a - 1, node_size)]];
-	const auto& node_after_a = problem.nodes[solution.nodes[(sol_node_a + 1) % node_size]];
+	const auto& node_before_a = solution.nodes[positiveModulo(sol_node_a - 1, node_size)];
+	const auto& node_after_a = solution.nodes[(sol_node_a + 1) % node_size];
 
-	const auto& node_before_b = problem.nodes[solution.nodes[positiveModulo(sol_node_b - 1, node_size)]];
-	const auto& node_after_b = problem.nodes[solution.nodes[(sol_node_b + 1) % node_size]];
+	const auto& node_before_b = solution.nodes[positiveModulo(sol_node_b - 1, node_size)];
+	const auto& node_after_b = solution.nodes[(sol_node_b + 1) % node_size];
 
 	auto distance_removed = distanceSquared(node_a, node_before_a) + distanceSquared(node_b, node_after_b);
 
