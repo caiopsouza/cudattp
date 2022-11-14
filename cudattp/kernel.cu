@@ -79,6 +79,99 @@ void localSearch(Solution& solution) {
 	}
 }
 
+__device__
+inline int distanceSquared2(const Node n_j, const Node n_i) {
+	const auto dx = n_j.x - n_i.x;
+	const auto dy = n_j.y - n_i.y;
+
+	return dx * dx + dy * dy;
+}
+
+__device__
+inline int positiveModulo2(int n, int m) {
+	return (n + m) % m;
+}
+
+__device__
+int tspCostChangeSquaredSwapDev2(Node* solution_nodes, size_t node_size, unsigned int sol_node_a, unsigned int sol_node_b) {
+	const auto& node_a = solution_nodes[sol_node_a];
+	const auto& node_b = solution_nodes[sol_node_b];
+
+	const auto& node_before_a = solution_nodes[positiveModulo2(sol_node_a - 1, node_size)];
+	const auto& node_after_a = solution_nodes[(sol_node_a + 1) % node_size];
+
+	const auto& node_before_b = solution_nodes[positiveModulo2(sol_node_b - 1, node_size)];
+	const auto& node_after_b = solution_nodes[(sol_node_b + 1) % node_size];
+
+	auto distance_removed = distanceSquared2(node_a, node_before_a) + distanceSquared2(node_b, node_after_b);
+
+	auto distance_added = distanceSquared2(node_a, node_after_b) + distanceSquared2(node_b, node_before_a);
+
+	return distance_added - distance_removed;
+}
+
+__global__
+void searchBestKernel(Node* solution, size_t solution_size, int* best_cost, int* best_j, int* best_i) {
+	auto j = blockIdx.x * blockDim.x + threadIdx.x;
+	auto i = blockIdx.y * blockDim.y + threadIdx.y;
+
+	if (i >= 1 && i < solution_size - 1 && j >= i + 1 && j < solution_size) {
+		auto change = tspCostChangeSquaredSwapDev2(solution, solution_size, i, j);
+		if (change < *best_cost) {
+			*best_cost = change;
+			*best_j = j;
+			*best_i = i;
+		}
+	}
+}
+
+void localSearchWithCuda(Solution& solution_host) {
+	Node* solution = nullptr;
+
+	auto solution_size = solution_host.nodes.size();
+	auto solution_size_in_bytes = solution_size * sizeof(Node);
+
+	cudaMalloc((void**)&solution, solution_size_in_bytes);
+	cudaMemcpy(solution, solution_host.nodes.data(), solution_size_in_bytes, cudaMemcpyHostToDevice);
+
+	int* aux_params = nullptr;
+	cudaMalloc((void**)&aux_params, 3 * sizeof(int));
+
+	int size_of_block = 32;
+	int size_of_grid = ceil(solution_size / (float)size_of_block);
+	dim3 dim_grid(size_of_grid, size_of_grid, 1);
+	dim3 dim_block(size_of_block, size_of_block, 1);
+
+	int return_kernel[3] = { 0, 0, 0 };
+
+	auto has_improved = true;
+
+	while (has_improved) {
+		cudaMemset(aux_params, 0, 3 * sizeof(int));
+		searchBestKernel << <dim_grid, dim_block >> > (solution, solution_size, &aux_params[0], &aux_params[1], &aux_params[2]);
+		cudaMemcpy(return_kernel, aux_params, 3 * sizeof(int), cudaMemcpyDeviceToHost);
+		
+		has_improved = return_kernel[0] < 0;
+
+		//std::cout << return_kernel[0] << " " << return_kernel[1] << " " << return_kernel[2] << std::endl;
+
+		if (has_improved) {
+			auto best_swap_i = return_kernel[2];
+			auto best_swap_j = return_kernel[1];
+
+			while (best_swap_i < best_swap_j) {
+				std::swap(solution_host.nodes[best_swap_i], solution_host.nodes[best_swap_j]);
+				++best_swap_i;
+				--best_swap_j;
+			}
+
+			cudaMemcpy(solution, solution_host.nodes.data(), solution_size_in_bytes, cudaMemcpyHostToDevice);
+		}
+	}
+
+	cudaFree(solution);
+}
+
 int main()
 {
 	std::cout.imbue(std::locale(""));
@@ -102,7 +195,7 @@ int main()
 
 	// 22.473.780 us, 151.250 cost, 137.694 bkr
 	t0 = Time::now();
-	localSearch(solution);
+	localSearchWithCuda(solution);
 	t1 = Time::now();
 	elapsed = t1 - t0;
 	std::cout << "local search time: " << std::chrono::duration_cast<ms>(elapsed).count() << std::endl;

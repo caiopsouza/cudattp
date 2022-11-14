@@ -1,6 +1,9 @@
 #pragma once
 
 #include <vector>
+
+#include "cuda_runtime.h"
+
 #include "problem.h"
 
 struct solution
@@ -21,6 +24,9 @@ int distance(const Problem& problem, const int j, const int i);
 double tspCost(const Problem& problem, const Solution& solution);
 
 double tspCostChangeSwap(const Problem& problem, Solution& solution, int node_a, int node_b);
+
+__device__
+int tspCostChangeSquaredSwapDev(Node* solution_nodes, size_t node_size, unsigned int sol_node_a, unsigned int sol_node_b);
 
 int tspCostChangeSquaredSwap(const std::vector<Node>& solution_nodes, int sol_node_a, int sol_node_b);
 int tspCostChangeSquaredSwap(const Problem& problem, Solution& solution, int sol_node_a, int sol_node_b);

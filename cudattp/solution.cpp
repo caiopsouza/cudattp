@@ -63,6 +63,24 @@ inline int positiveModulo(int n, int m) {
 	return (n + m) % m;
 }
 
+__device__
+int tspCostChangeSquaredSwapDev(Node* solution_nodes, size_t node_size, unsigned int sol_node_a, unsigned int sol_node_b) {
+	const auto& node_a = solution_nodes[sol_node_a];
+	const auto& node_b = solution_nodes[sol_node_b];
+
+	const auto& node_before_a = solution_nodes[positiveModulo(sol_node_a - 1, node_size)];
+	const auto& node_after_a = solution_nodes[(sol_node_a + 1) % node_size];
+
+	const auto& node_before_b = solution_nodes[positiveModulo(sol_node_b - 1, node_size)];
+	const auto& node_after_b = solution_nodes[(sol_node_b + 1) % node_size];
+
+	auto distance_removed = distanceSquared(node_a, node_before_a) + distanceSquared(node_b, node_after_b);
+
+	auto distance_added = distanceSquared(node_a, node_after_b) + distanceSquared(node_b, node_before_a);
+
+	return distance_added - distance_removed;
+}
+
 int tspCostChangeSquaredSwap(const std::vector<Node>& solution_nodes, int sol_node_a, int sol_node_b) {
 	auto node_size = solution_nodes.size();
 
